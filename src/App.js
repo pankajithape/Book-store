@@ -1,21 +1,15 @@
-import "./App.css";
+import AvailableBooks from "./components/Books/AvailableBooks";
+import BooksSummary from "./components/Books/BooksSummary";
+import Header from "./components/Layout/Header";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <Header />
+      <main>
+        <BooksSummary />
+        <AvailableBooks />
+      </main>
     </div>
   );
 }

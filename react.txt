@@ -1,0 +1,563 @@
+React creates reusable and reactive components using html, js, css.
+main job: render UI & react to User input
+evaluate and render JSX
+manage state & props
+react to user events & input
+re-evaluate component upon state & prop changes.
+
+components are regular javascript functions which return renderable results(JSX)
+
+controlled component - expenseFilter , for a component, both values and change of value, in two way binging data changes, are done by other component ie, parent/any other component.
+Uncontrolled component - using ref if you manage input elements, you are not using react to handle state. using js dom for checking value changes.
+Stateless component - component which does not have state, which has only representational logic only.
+
+componenetion- <Card className='expense-item'>....</Card>  => use in any component. 
+.card {border-radius: 12px;box-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);}
+
+function Card(props) {
+  const classes = 'card ' + props.className;
+  return <div className={classes}>{props.children}</div>;
+}
+
+styling react component - inline  <label style={{color:red}}> , using css module styling, import styles from './button.module.css'  <button className={styles.btn} > , here, unique class names get generated.
+
+Child to parent component communication
+onProps,on Event-props 
+we move data from child to parent component by utilizing props to receive a function from parent component which we call in child component
+const goalTextHandler=(e)=>{setGoalText(e.target.value)}
+<input onChange={goalTextHandler}>
+
+<Parent>
+<Child onSaveData={callbackFun}>
+</Parent> 
+Fragment - to avoid nested <div>,  return (<><comp1/><comp2/><>) or return (<React.Fragment><comp1/><comp2/></React.Fragment>)
+  when we want to render more than 1 component/element, we use fragment, can't return 2 or more element side by side, need to have one parent/root element only.
+
+createPortal - having modal nested in html code is not good symantically. it is an overlay to entire page.
+public/index.html     create <div id="Modaloverlay"/> 
+ErrorModal.js ReactDOM.createPortal(<Backdrop>, document.getElementById('Modaloverlay'))
+in react project page, you see div with root, and using portal, you get component ported/lifted to wherever you want.
+
+ref- updating state with every key stroke, not necessary sometimes. For input element, only on submit, we needed to change state variable. ref makes connection with element with other js code. Ref uses less code but manipulation of dom. it is uncontrolled component as for component's states are not controlled by react, but dom api methods.
+using useState, we let component controlled,handled by react, so those components are controlled component
+ const user = (props) =>{
+const nameInputRef = useRef();
+
+
+return(){
+const enteredName=nameInputRef.current.value;
+<input ref={nameInputRef}>}
+
+useEffect- working with (side) effects
+store data in browser storage, send http request to backend server, set & manage timer
+data feching operations are occured in side effects.
+const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+useEffect(() => {
+    const storedUserLoggedInInformation = localStorage.getItem('isLoggedIn');
+    if (storedUserLoggedInInformation === '1') {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+useEffect(() => {
+  setFormIsValid(
+    enteredEmail.includes('@') && enteredPassword.trim().length > 6
+  );
+}, [enteredEmail, enteredPassword]);
+
+useEffect(() => {
+  const identifier = setTimeout(() => {
+    console.log('Checking form validity!');
+    setFormIsValid(
+      enteredEmail.includes('@') && enteredPassword.trim().length > 6
+    );
+  }, 500);
+
+  return () => {
+    console.log('CLEANUP');
+    clearTimeout(identifier);
+  };
+}, [enteredEmail, enteredPassword]);
+
+useReducer - managing more complex states 
+const [state, dispatchFn] = useReducer(reducerFn, initialState, initFn);
+state- get/returns state snapshot
+dispatchFn- get/returns function that updates state snapshot (kind of like setCounter, but this works differently)
+  instead of setting new set value, it sets/dispatch action
+reducerFn- action dispatch by dispatchFn will be consumed by reducerFn
+  it gets (prevState, action) . React will call this function whenever new action is dispatched, it returns newState
+  (prevState, action) => newState
+
+const emailReducer = (state, action) => {
+  if (action.type === "USER_INPUT") {
+    return { value: action.val, isValid: action.val.includes("@") };
+  }
+};
+
+const Login = (props) => {
+  // const [enteredEmail, setEnteredEmail] = useState('');
+  // const [emailIsValid, setEmailIsValid] = useState();
+
+  const [emailState, dispatchEmail] = useReducer(emailReducer, {
+    value: "",
+    isValid: null,
+  });
+
+  const emailChangeHandler = (event) => {
+    dispatchEmail({ type: "USER_INPUT", val: event.target.value });
+  };
+
+
+useContext - managing  app/component wide states. managing lot of data through lot of components through props. to avoid prop chaining, unnecessary flow of attributes across many child components.
+store/auth-context.js  
+const AuthContext = React.createContext({
+  isLoggedIn: false
+});
+
+App.js
+return(<div><AuthContext.Provider  value={{ isLoggedIn: isLoggedIn }}><Nav></AuthContext.Provider></div>)
+
+Nav.js
+import AuthContext from store, import {useContext} from react
+const Nav =(props)=>{
+const ctx=useContext(AuthContext)
+return (<AuthContext.Consumer>{ctx.isLoggedIn && <li><a>Users</a></li>}</AuthContext.Consumer>)
+}
+
+const AuthContext = React.createContext({
+  isLoggedIn: false,
+  onLogout: () => {},
+  onLogin: (email, password) => {}
+});
+
+export const AuthContextProvider = (props) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const logoutHandler = () => {
+    localStorage.removeItem('isLoggedIn');
+    setIsLoggedIn(false);
+  };
+  return (
+    <AuthContext.Provider
+      value={{
+        isLoggedIn: isLoggedIn,
+        onLogout: logoutHandler,
+        onLogin: loginHandler,
+      }}
+    >
+      {props.children}
+    </AuthContext.Provider>
+  );
+export defalut AuthContextProvider;
+
+index.js
+  <AuthContextProvider>
+    <App />
+  </AuthContextProvider>
+
+forward-ref - useImperativeHandle component
+
+-useMemo() to prevent unnecessary re-evalutation of child component. On condition of if props of child component gets changed, then only render
+export default React.memo(Paragraph)
+props.show === props.previous.show premitive data, true ==== true , gives true
+props.onClick === props.previous.onClick reference/non-premitive data,
+function objects event if content of both are same, they are never equal {name:'om'}==={name:'om'} gives false 
+For components which receive object, array, function as attribute, 
+
+-useMemo
+You have logic like sortedList = props.items.sort((a,b)=> a-b)
+this logic will reevalutation everytime, use usemom
+sortedList = useMemo(()=>{return props.items.sort((a,b)=> a-b)}
+const listItems=useMemo(()=>[5,1,3,2],[])
+
+-useCallback hook used to store/save function across component executions. This function should not be created with every execution.Same object is stored is same memory.
+obj1={}, obj2={}  obj1===obj2 false       obj2=obj1 obj1===obj2 true
+ const toggleParagraphHandler=()=>{setParagraph(prevShowParagraph=>!prevShowParagraph)}
+ const toggleParagraphHandler=useCallback(()=>{setParagraph(prevShowParagraph=>!prevShowParagraph)},[])
+
+Class based component-js classes with render method defines output
+componentDidMount()    Called once component mounted (was evaluated & rendered)
+componentDidUpdate()     Called once component updated (was evaluated & rendered)
+componentWillUnmount() Called right before component is  unmounted (removed from DOM 
+
+useEffect(…, [])
+useEffect(…, [someValue])
+useEffect(() => { return () => {…}}, [])
+
+const DUMMY_USERS = [
+  { id: 'u1', name: 'Max' },
+  { id: 'u2', name: 'Manuel' },
+  { id: 'u3', name: 'Julie' },
+];
+
+class Users extends Component {
+  constructor() {
+    super();
+    this.state = {
+      showUsers: true,
+      more: 'Test',
+    };
+  }
+
+  toggleUsersHandler() {
+    // this.state.showUsers = false; // NOT!
+    this.setState((curState) => {
+      return { showUsers: !curState.showUsers };
+    });
+  }
+
+  render() {
+  const userlist=[{},{}]
+    return (
+      <div className={classes.users}>
+        <button onClick={this.toggleUsersHandler.bind(this)}>
+          {this.state.showUsers ? 'Hide' : 'Show'} Users
+        </button> 
+        {this.state.showUsers && usersList}
+      </div>
+    );
+  }
+}
+
+  const [filteredUsers, setFilteredUsers] = useState(DUMMY_USERS);
+
+  componentDidMount() {
+    // Send http request...
+    this.setState({ filteredUsers: DUMMY_USERS });
+  }
+
+  useEffect(() => {
+    setFilteredUsers(
+      DUMMY_USERS.filter((user) => user.name.includes(searchTerm))
+    );
+  }, [searchTerm]);
+
+ constructor() {
+    super();
+    this.state = {
+      filteredUsers: [],
+      searchTerm: '',
+    };
+  }
+
+    componentDidUpdate(prevProps, prevState) {
+    if (prevState.searchTerm !== this.state.searchTerm) {
+      this.setState({
+        filteredUsers: DUMMY_USERS.filter((user) =>
+          user.name.includes(this.state.searchTerm)
+        ),
+      });
+    }
+  }
+
+  use context in class component
+  const UsersContext = React.createContext({
+  users: []
+  });
+
+    static contextType = UsersContext;
+      componentDidMount() {
+    // Send http request...
+    this.setState({ filteredUsers: this.context.users });
+  }
+
+-ErrorBoundary in app.js
+    componentDidUpdate() {
+    if (this.props.users.length === 0) {
+      throw new Error('No users provided!');
+    }
+  }
+
+class ErrorBoundary extends Component {
+  constructor() {
+    super();
+    this.state = { hasError: false };
+  }
+
+  componentDidCatch(error) {
+    this.setState({ hasError: true });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <p>Something went wrong!</p>;
+    }
+    return this.props.children;
+  }
+
+  app.js
+  <ErrorBoundary><comp1/></ErrorBoundary>
+
+  -Sending http requests
+app.js
+  return (<button onClick={fetchMoviesHandler}>Fetch Movies</button>)
+  
+  const [movies, setMovies] = useState([]);
+  function fetchMoviesHandler() {
+    fetch("https://swapi.dev/api/films/")
+      .then((response) => {
+        return response.json();
+      })
+      .then((data) => {
+        const transformedMovies = data.results.map((movieData) => {
+          return {
+            id: movieData.episode_id,
+            title: movieData.title,
+            openingText: movieData.opening_crawl,
+            releaseDate: movieData.release_date,
+          };
+        });
+        setMovies(transformedMovies);
+      });
+  }
+
+  async function fetchMoviesHandler() {
+    const response=await fetch("https://swapi.dev/api/films/")
+    const data=await response.json()
+    const transformedMovies = data.results.map((movieData) => {...
+
+  const fetchMoviesHandler = useCallback(async () => {
+
+    async function addMovieHandler(movie) {
+    const response = await fetch(
+      "https://react-swapi-1e41b-default-rtdb.firebaseio.com/movies.json",
+      {
+        method: "POST",
+        body: JSON.stringify(movie),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    const data = await response.json();
+    console.log(data);
+  
+  -creating custom hook
+  hooks/use-counter.js
+  forwordCounter & backwordCounter
+  const useCounter = (forwards = true) => {
+  const [counter, setCounter] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (forwards) {
+        setCounter((prevCounter) => prevCounter + 1);
+      } else {
+        setCounter((prevCounter) => prevCounter - 1);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [forwards]);
+
+  return counter;
+};
+
+backwordCounter.js
+  const counter = useCounter(false);
+
+
+- Handling forms
+  const SimpleInput = (props) => {
+  const nameInputRef = useRef();
+  const [enteredName, setEnteredName] = useState('');
+  const [enteredNameIsValid, setEnteredNameIsValid] = useState(false);
+  const [enteredNameTouched, setEnteredNameTouched] = useState(false);
+
+  const nameInputChangeHandler = (event) => {
+    setEnteredName(event.target.value);
+  };
+
+  const formSubmissionHandler = (event) => {
+    event.preventDefault();
+    setEnteredNameTouched(true);
+    if (enteredName.trim() === '') {
+      setEnteredNameIsValid(false);
+      return;
+    }
+    setEnteredNameIsValid(true);
+    const enteredValue = nameInputRef.current.value;
+    setEnteredName('');
+  };
+
+  const nameInputIsInvalid = !enteredNameIsValid && enteredNameTouched;
+
+
+redux - state management system for app-wide state 
+
+eg., in node project. Redux is a tool used in any project, it's not related only to react.
+import { createStore } from 'redux';
+const counterReducer = (state = { counter: 0 }, action) => {
+  if (action.type === 'increment') {
+    return {
+      counter: state.counter + 1,
+    };
+  }
+  return state;
+};
+
+const store = createStore(counterReducer);
+
+const counterSubscriberComponent=()=>{
+  const latestState=store.getState();
+  console.log(latestState)
+}
+
+store.subscribe(counterSubscriberComponent)
+
+store.dispatch({type:'increment'})
+
+export default store;
+
+-npm i redux react-redux
+
+react project eg.,
+
+store/index.js
+import { createStore } from 'redux';
+const counterReducer = (state = { counter: 0 }, action) => {
+  if (action.type === 'increment') {
+    return {
+      counter: state.counter + 1,
+    };
+  }
+  return state;
+};
+
+const store = createStore(counterReducer);
+
+src/index.js
+import { Provider } from 'react-redux';
+import App from './App';
+import store from './store/index';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <Provider store={store}>
+    <App />
+  </Provider>
+);
+
+Counter.js
+import { useSelector,useDispatch } from 'react-redux';
+
+const Counter = () => {
+  const counter = useSelector(state => state.counter);
+  const dispatch = useDispatch();
+
+  const incrementHandler = () => {
+    dispatch({ type: 'increment',amount:10 });
+  };
+
+  <button onClick={incrementHandler}>
+
+useSelector is hook in redux which slices part of state object.
+it is a subscription to redux-store
+useSelector takes function which determines which piece of data we want to extract from store.
+
+store/index.js
+import { createStore } from 'redux';
+const counterReducer = (state = { counter: 0 }, action) => {
+  if (action.type === 'increment') {
+    return {
+      counter: state.counter + 1,
+      counter: state.counter + state.amount,
+
+    };
+  }
+
+redux in class based component
+
+
+class Counter extends Component {
+  incrementHandler() {
+    this.props.increment();
+  }
+  return(){
+     <button onClick={this.incrementHandler.bind(this)}
+  }
+
+const mapStateToProps = (state) => {
+  return {
+    counter: state.counter,
+  };
+};
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    increment: () => dispatch({ type: "increment" }),
+    decrement: () => dispatch({ type: "decrement", amount:5 }),
+  };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Counter);
+
+-Slice
+
+import { createSlice, configureStore } from '@reduxjs/toolkit';
+
+const initialCounterState = { counter: 0, showCounter: true };
+
+const counterSlice = createSlice({
+  name: 'counter',
+  initialState: initialCounterState,
+  reducers: {
+    increment(state) {
+      state.counter++;
+    },
+    decrement(state) {
+      state.counter--;
+    },
+    increase(state, action) {
+      state.counter = state.counter + action.payload;
+    },
+    toggleCounter(state) {
+      state.showCounter = !state.showCounter;
+    },
+  },
+});
+
+const initialAuthState = {
+  isAuthenticated: false,
+};
+
+const authSlice = createSlice({
+  name: 'authentication',
+  initialState: initialAuthState,
+  reducers: {
+    login(state) {
+      state.isAuthenticated = true;
+    },
+    logout(state) {
+      state.isAuthenticated = false;
+    },
+  },
+});
+
+const store = configureStore({
+  reducer: { counter: counterSlice.reducer, auth: authSlice.reducer },
+});
+
+export const counterActions = counterSlice.actions;
+export const authActions = authSlice.actions;
+
+export default store;
+
+React Thunk & Saga - differences, use cases
+
+typescript- use cases, where you used in project.
+
+nextjs library
+
+material ui - 
+
+jest enzyme
+
+wordpress to component, how you flow data 
+
+which technologies used for developing - github, slack,jira,confluence.
+
+Are you following agile method?
+
+Any questions for interviewer?
+Yes. If i get selected, what type of projects I will be working on & what technologies. Possibility to work on backend also.
