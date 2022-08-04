@@ -38,6 +38,7 @@ const AvailableBooks = (props) => {
   const books = DUMMY_BOOKS.map((book) => (
     <BookItem
       key={book.id}
+      id={book.id}
       name={book.name}
       description={book.description}
       price={book.price}
